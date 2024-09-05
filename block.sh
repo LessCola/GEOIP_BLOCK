@@ -144,7 +144,7 @@ list_rule(){
     printf "%-15s %-15s %-15s %-15s %-15s %-15s\n" "序号" "动作" "IP" "地区" "协议" "目标端口"
 
     # 获取并格式化 iptables 规则
-    iptables_rules=$(sudo iptables -L $CHAIN_NAME --line-numbers -n | awk 'NR > 2 {printf "%-13s %-13s %-13s %-13s %-13s %-13s\n", NR-2, $2, $5, $7, $8, $10}')
+    iptables_rules=$(iptables -L $CHAIN_NAME --line-numbers -n | awk 'NR > 2 {printf "%-13s %-13s %-13s %-13s %-13s %-13s\n", NR-2, $2, $5, $7, $8, $10}')
     if [ -n "$iptables_rules" ]; then
 
         echo "$iptables_rules" | awk '
@@ -177,7 +177,7 @@ list_rule(){
     # echo $ipv4_count
 
     # 获取并格式化 ip6tables 规则
-    ip6tables_rules=$(sudo ip6tables -L $CHAIN_NAME --line-numbers -n | awk -v offset=$((ipv4_count)) 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $8, $10}')
+    ip6tables_rules=$(ip6tables -L $CHAIN_NAME --line-numbers -n | awk -v offset=$((ipv4_count)) 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $8, $10}')
 
     if [ -n "$ip6tables_rules" ]; then
 
@@ -414,7 +414,7 @@ delete_rules() {
     printf "%-15s %-15s %-15s %-15s %-15s %-15s\n" "序号" "动作" "IP" "地区" "协议" "目标端口"
 
     # 获取并格式化 iptables 规则
-    iptables_rules=$(sudo iptables -L $CHAIN_NAME --line-numbers -n | awk 'NR > 2 {printf "%-13s %-13s %-13s %-13s %-13s %-13s\n", NR-2, $2, $5, $7, $8, $10}')
+    iptables_rules=$(iptables -L $CHAIN_NAME --line-numbers -n | awk 'NR > 2 {printf "%-13s %-13s %-13s %-13s %-13s %-13s\n", NR-2, $2, $5, $7, $8, $10}')
     if [ -n "$iptables_rules" ]; then
 
         echo "$iptables_rules" | awk '
@@ -447,7 +447,7 @@ delete_rules() {
     # echo $ipv4_count
 
     # 获取并格式化 ip6tables 规则
-    ip6tables_rules=$(sudo ip6tables -L $CHAIN_NAME --line-numbers -n | awk -v offset=$((ipv4_count)) 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $8, $10}')
+    ip6tables_rules=$(ip6tables -L $CHAIN_NAME --line-numbers -n | awk -v offset=$((ipv4_count)) 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $8, $10}')
 
     if [ -n "$ip6tables_rules" ]; then
 
@@ -490,11 +490,11 @@ delete_rules() {
 
         if [ "$rule_number" -le "$ipv4_count" ]; then
             echo "删除 IPv4 链 $CHAIN_NAME 上的序号 $rule_number 的规则"
-            sudo iptables -D $CHAIN_NAME $rule_number
+            iptables -D $CHAIN_NAME $rule_number
         elif [ "$rule_number" -le "$((ipv4_count + ipv6_count))" ]; then
             ipv6_number=$((rule_number - ipv4_count))
             echo "删除 IPv6 链 $CHAIN_NAME 上的序号 $ipv6_number 的规则"
-            sudo ip6tables -D $CHAIN_NAME $ipv6_number
+            ip6tables -D $CHAIN_NAME $ipv6_number
         else
             echo "无效的规则序号 '$rule_number'"
             exit 1
