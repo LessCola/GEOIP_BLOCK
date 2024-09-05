@@ -515,8 +515,14 @@ delete_all(){
 
     echo '删除所有规则成功'
 
+    show_menu
+
 }
 
 
 chech_status
 show_menu
+
+
+
+
