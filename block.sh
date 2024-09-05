@@ -257,7 +257,7 @@ allow(){
 
     list_rule
 
-    echo && read -p "请输入需要放行的IP地址:"
+    echo && read -p "请输入需要放行的IP地址:" ip
 
     checkIp "$ip"
 
