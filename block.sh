@@ -395,7 +395,7 @@ block(){
 
     case "${cont}" in
     1)
-        allow
+        block
         ;;
     2)
         show_menu
