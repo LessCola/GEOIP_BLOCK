@@ -63,7 +63,17 @@ function LOGD() {
 
 chech_status(){
 
+    if ! command -v bash &> /dev/null; then
+        echo "bash is not installed. Please install it first."
+        exit 1
+    fi
+
     if ! command -v iptables &> /dev/null; then
+        echo "iptables is not installed. Please install it first."
+        exit 1
+    fi
+
+    if ! command -v ip6tables &> /dev/null; then
         echo "iptables is not installed. Please install it first."
         exit 1
     fi
