@@ -24,6 +24,12 @@ sourceURL="https://fastly.jsdelivr.net/gh/Loyalsoldier/geoip@release/text/"
 ipFile="${country}.txt"
 ipURL="${sourceURL}${ipFile}"
 CHAIN_NAME="GEO_BLOCK"
+SAVE_DIR=$(pwd)
+
+IPSET_CONF="$SAVE_DIR/ipset.conf"
+IPTABLES4_CONF="$SAVE_DIR/rules.v4"
+IPTABLES6_CONF="$SAVE_DIR/rules.v6"
+
 
 function checkPort() {
 
@@ -111,9 +117,10 @@ GEO-IP-BLOCK 管理脚本
 ${green}0.${plain} 退出脚本
 ————————————————
 ${green}1.${plain} 查看规则
-${green}2.${plain} 新增规则
-${green}3.${plain} 删除规则
-${green}4.${plain} 清空规则
+${green}2.${plain} 放行规则
+${green}3.${plain} 封禁规则
+${green}4.${plain} 删除规则
+${green}5.${plain} 清空规则
 "
     echo && read -p "请输入选择[0-3]:" num
 
@@ -125,12 +132,15 @@ ${green}4.${plain} 清空规则
         list_rules
         ;;
     2)
-        add_rules
+        allow
         ;;
     3)
-        delete_rules
+        block
         ;;
     4)
+        delete_rules
+        ;;
+    5)
         delete_all
         ;;
     *)
@@ -226,31 +236,6 @@ list_rules(){
 
 }
 
-add_rules(){
-    clear
-    echo -e "
-${green}1.${plain} 放行IP
-${green}2.${plain} 封禁端口
-${green}0.${plain} 回到菜单
-"
-    echo && read -p "请输入选择[0-2]:" num
-    case "${num}" in
-    0)
-        show_menu
-        ;;
-    1)
-        allow
-        ;;
-    2)
-        block
-        ;;
-    *)
-        LOGE "请输入正确的选项 [0-2]"
-        ;;
-    esac
-
-}
-
 allow(){
 
     clear
@@ -307,6 +292,8 @@ allow(){
 
     list_rule
 
+    save
+
     echo && read -p "放行 $ip 的 $port 端口成功！是否继续放行？ 1.继续放行 0.回到主菜单" cont
 
     case "${cont}" in
@@ -350,8 +337,8 @@ block(){
     echo && read -p "请输入需要封锁的协议 1.TCP 2.UDP 3.ALL:" tua
 
     # 销毁现有的 ipset 集合
-    ipset destroy "${country}_4" 2>/dev/null
-    ipset destroy "${country}_6" 2>/dev/null
+    ipset list | awk '/^Name:/ {print $2}' | xargs -I {} ipset destroy {}
+
 
     # 创建新的 ipset 集合
     ipset create "${country}_4" hash:net 2>/dev/null
@@ -390,6 +377,8 @@ block(){
     clear
 
     list_rule
+
+    save
 
     echo && read -p "封禁 $country 的 $port 端口成功！是否继续封禁？ 1.继续封禁 2.回到主菜单" cont
 
@@ -506,6 +495,8 @@ delete_rules() {
 
     fi
 
+    save
+
     delete_rules
 }
 
@@ -523,16 +514,61 @@ delete_all(){
         :
     fi
 
+    ipset list | awk '/^Name:/ {print $2}' | xargs -I {} ipset destroy {}
+
+    [ -f "$IPSET_CONF" ] && rm "$IPSET_CONF"
+
+    [ -f "$IPTABLES4_CONF" ] && rm "$IPTABLES4_CONF"
+
+    [ -f "$IPTABLES6_CONF" ] && rm "$IPTABLES6_CONF"
+
     echo '删除所有规则成功'
 
     show_menu
 
 }
 
+save(){
 
-chech_status
-show_menu
+    [ -f "$IPSET_CONF" ] && rm "$IPSET_CONF"
 
+    [ -f "$IPTABLES4_CONF" ] && rm "$IPTABLES4_CONF"
 
+    [ -f "$IPTABLES6_CONF" ] && rm "$IPTABLES6_CONF"
 
+    ipset save > $IPSET_CONF
+    iptables-save > $IPTABLES4_CONF
+    ip6tables-save > $IPTABLES6_CONF
 
+}
+
+restore() {
+
+    if [ -f "$IPSET_CONF" ]; then
+        ipset restore < "$IPSET_CONF" || echo "Failed to restore ipset configuration."
+    else
+        echo "No ipset configuration file found."
+    fi
+
+    if [ -f "$IPTABLES4_CONF" ]; then
+        iptables-restore < "$IPTABLES4_CONF" || echo "Failed to restore IPv4 iptables configuration."
+    else
+        echo "No IPv4 iptables configuration file found."
+    fi
+
+    if [ -f "$IPTABLES6_CONF" ]; then
+        ip6tables-restore < "$IPTABLES6_CONF" || echo "Failed to restore IPv6 iptables configuration."
+    else
+        echo "No IPv6 iptables configuration file found."
+    fi
+}
+
+if [ "$1" = "restore" ]; then
+    restore
+else
+    chech_status
+    show_menu
+fi
+
+# chech_status
+# show_menu
