@@ -336,13 +336,18 @@ block(){
 
     echo && read -p "请输入需要封锁的协议 1.TCP 2.UDP 3.ALL:" tua
 
-    # 销毁现有的 ipset 集合
-    ipset list | awk '/^Name:/ {print $2}' | xargs -I {} ipset destroy {}
+    if ipset list | grep "^Name: $set_name"; then
+        :
+    else
+        ipset create "${country}_4" hash:net 2>/dev/null
+    fi
 
+    if ipset list | grep "^Name: $set_name"; then
+        :
+    else
+        ipset create "${country}_6" hash:net family inet6 2>/dev/null
+    fi
 
-    # 创建新的 ipset 集合
-    ipset create "${country}_4" hash:net 2>/dev/null
-    ipset create "${country}_6" hash:net family inet6 2>/dev/null
 
     # 读取文件并添加 IP 地址到 ipset 集合
     while IFS= read -r ip; do
