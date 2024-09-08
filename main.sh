@@ -151,30 +151,24 @@ ${green}5.${plain} 清空规则
 
 list_rule(){
 
-    printf "%-15s %-15s %-15s %-15s %-15s %-15s\n" "序号" "动作" "IP" "地区" "协议" "目标端口"
+    printf "%-15s %-15s %-15s %-15s %-15s %-15s %-15s\n" "序号" "动作" "IP" "地区" "Version" "协议" "目标端口"
 
     # 获取并格式化 iptables 规则
-    iptables_rules=$(iptables -L $CHAIN_NAME --line-numbers -n | awk 'NR > 2 {printf "%-13s %-13s %-13s %-13s %-13s %-13s\n", NR-2, $2, $5, $7, $8, $10}')
-    if [ -n "$iptables_rules" ]; then
+    iptables_rules=$(iptables -L $CHAIN_NAME --line-numbers -n | awk -v offset=$((ipv4_count)) 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $8, $10}')
 
+    if [ -n "$iptables_rules" ]; then
         echo "$iptables_rules" | awk '
         {
             # 处理分割字段
             split($5, a, ":");
             split($6, b, "_");
-            
-            if (a[2] == "") {
-                a[2] = "None"
-            }
 
-            if (b[2] == "") {
-                b[2] = "None"
-            }else{
-                $3 = "None"
+            if ($3 == "0.0.0.0/0") {
+                $3 = "ALL"
             }
 
             # 打印格式化输出
-            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, b[2], $4, a[2]
+            printf "%-13s %-13s %-15s %-13s %-15s %-13s %-13s\n", $1, $2, $3, b[1], b[2], $4, a[2]
         }'
 
     else
@@ -190,25 +184,18 @@ list_rule(){
     ip6tables_rules=$(ip6tables -L $CHAIN_NAME --line-numbers -n | awk -v offset=$((ipv4_count)) 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $8, $10}')
 
     if [ -n "$ip6tables_rules" ]; then
-
         echo "$ip6tables_rules" | awk '
         {
             # 处理分割字段
             split($5, a, ":");
             split($6, b, "_");
-            
-            if (a[2] == "") {
-                a[2] = "None"
-            }
 
-            if (b[2] == "") {
-                b[2] = "None"
-            }else{
-                $3 = "None"
+            if ($3 == "::/0") {
+                $3 = "ALL"
             }
 
             # 打印格式化输出
-            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, b[2], $4, a[2]
+            printf "%-13s %-13s %-15s %-13s %-15s %-13s %-13s\n", $1, $2, $3, b[1], b[2], $4, a[2]
         }'
 
     else
@@ -407,8 +394,8 @@ delete_rules() {
 
     printf "%-15s %-15s %-15s %-15s %-15s %-15s\n" "序号" "动作" "IP" "地区" "协议" "目标端口"
 
-    # 获取并格式化 iptables 规则
-    iptables_rules=$(iptables -L $CHAIN_NAME --line-numbers -n | awk 'NR > 2 {printf "%-13s %-13s %-13s %-13s %-13s %-13s\n", NR-2, $2, $5, $7, $8, $10}')
+    iptables_rules=$(ip6tables -L $CHAIN_NAME --line-numbers -n | awk -v offset=$((ipv4_count)) 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $7, $8, $10}')
+
     if [ -n "$iptables_rules" ]; then
 
         echo "$iptables_rules" | awk '
@@ -441,7 +428,7 @@ delete_rules() {
     # echo $ipv4_count
 
     # 获取并格式化 ip6tables 规则
-    ip6tables_rules=$(ip6tables -L $CHAIN_NAME --line-numbers -n | awk -v offset=$((ipv4_count)) 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $8, $10}')
+    ip6tables_rules=$(ip6tables -L $CHAIN_NAME --line-numbers -n | awk -v offset=$((ipv4_count)) 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $7, $8, $10}')
 
     if [ -n "$ip6tables_rules" ]; then
 
