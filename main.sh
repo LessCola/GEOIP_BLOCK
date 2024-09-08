@@ -154,7 +154,7 @@ list_rule(){
     printf "%-15s %-15s %-15s %-15s %-15s %-15s %-15s\n" "序号" "动作" "IP" "地区" "Version" "协议" "目标端口"
 
     # 获取并格式化 iptables 规则
-    iptables_rules=$(iptables -L $CHAIN_NAME --line-numbers -n | awk -v offset=$((ipv4_count)) 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $8, $10}')
+    iptables_rules=$(iptables -L $CHAIN_NAME --line-numbers -n | awk 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $8, $10}')
 
     if [ -n "$iptables_rules" ]; then
         echo "$iptables_rules" | awk '
@@ -305,9 +305,9 @@ block(){
 
     echo && read -e -p "请输入需要封锁的地区:" country
 
-    rm $tempdir/$ipFile
+    rm $tempdir/$ipFile 2>/dev/null
 
-    wget -P "$tempdir" "$ipURL"
+    wget -q --show-progress -P "$tempdir" "$ipURL"
 
     if [ $? -ne 0 ]; then
         echo "Failed to download IP address list from ${ipURL}"
@@ -326,28 +326,37 @@ block(){
     if ipset list 2>/dev/null | grep "^Name: ${country}_4"; then
         :
     else
+
         ipset create "${country}_4" hash:net 2>/dev/null
+
+        # 读取文件并添加 IP 地址到 ipset 集合
+        while IFS= read -r ip; do
+            if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+$ ]]; then
+                ipset add "${country}_4" "$ip" -exist
+            else
+                :
+            fi
+        done < "$tempdir/$ipFile"
     fi
 
     if ipset list 2>/dev/null | grep "^Name: ${country}_6"; then
         :
     else
+
         ipset create "${country}_6" hash:net family inet6 2>/dev/null
-    fi
 
+        # 读取文件并添加 IP 地址到 ipset 集合
+        while IFS= read -r ip; do
 
-    # 读取文件并添加 IP 地址到 ipset 集合
-    while IFS= read -r ip; do
-        if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+$ ]]; then
-            ipset add "${country}_4" "$ip" -exist
-        elif [[ $ip =~ ^[0-9a-fA-F:]+/[0-9]+$ ]]; then
-            ipset add "${country}_6" "$ip" -exist
-        else
-            echo "$ip is not a valid IP address range."
-        fi
-    done < "$tempdir/$ipFile"
+            if [[ $ip =~ ^[0-9a-fA-F:]+/[0-9]+$ ]]; then
+                ipset add "${country}_6" "$ip" -exist
+            else
+                :
+            fi
 
+        done < "$tempdir/$ipFile"
         rm $tempdir/$ipFile
+    fi
 
     case $tua in
         1)
@@ -392,30 +401,24 @@ delete_rules() {
 
     clear
 
-    printf "%-15s %-15s %-15s %-15s %-15s %-15s\n" "序号" "动作" "IP" "地区" "协议" "目标端口"
+    printf "%-15s %-15s %-15s %-15s %-15s %-15s %-15s\n" "序号" "动作" "IP" "地区" "Version" "协议" "目标端口"
 
-    iptables_rules=$(ip6tables -L $CHAIN_NAME --line-numbers -n | awk -v offset=$((ipv4_count)) 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $7, $8, $10}')
+    # 获取并格式化 iptables 规则
+    iptables_rules=$(iptables -L $CHAIN_NAME --line-numbers -n | awk 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $8, $10}')
 
     if [ -n "$iptables_rules" ]; then
-
         echo "$iptables_rules" | awk '
         {
             # 处理分割字段
             split($5, a, ":");
             split($6, b, "_");
-            
-            if (a[2] == "") {
-                a[2] = "None"
-            }
 
-            if (b[2] == "") {
-                b[2] = "None"
-            }else{
-                $3 = "None"
+            if ($3 == "0.0.0.0/0") {
+                $3 = "ALL"
             }
 
             # 打印格式化输出
-            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, b[2], $4, a[2]
+            printf "%-13s %-13s %-15s %-13s %-15s %-13s %-13s\n", $1, $2, $3, b[1], b[2], $4, a[2]
         }'
 
     else
@@ -428,28 +431,21 @@ delete_rules() {
     # echo $ipv4_count
 
     # 获取并格式化 ip6tables 规则
-    ip6tables_rules=$(ip6tables -L $CHAIN_NAME --line-numbers -n | awk -v offset=$((ipv4_count)) 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $7, $8, $10}')
+    ip6tables_rules=$(ip6tables -L $CHAIN_NAME --line-numbers -n | awk -v offset=$((ipv4_count)) 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $8, $10}')
 
     if [ -n "$ip6tables_rules" ]; then
-
         echo "$ip6tables_rules" | awk '
         {
             # 处理分割字段
             split($5, a, ":");
             split($6, b, "_");
-            
-            if (a[2] == "") {
-                a[2] = "None"
-            }
 
-            if (b[2] == "") {
-                b[2] = "None"
-            }else{
-                $3 = "None"
+            if ($3 == "::/0") {
+                $3 = "ALL"
             }
 
             # 打印格式化输出
-            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, b[2], $4, a[2]
+            printf "%-13s %-13s %-15s %-13s %-15s %-13s %-13s\n", $1, $2, $3, b[1], b[2], $4, a[2]
         }'
 
     else
