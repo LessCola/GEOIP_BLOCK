@@ -122,7 +122,7 @@ ${green}3.${plain} 封禁规则
 ${green}4.${plain} 删除规则
 ${green}5.${plain} 清空规则
 "
-    echo && read -p "请输入选择[0-3]:" num
+    echo && read -e -p "请输入选择[0-3]:" num
 
     case "${num}" in
     0)
@@ -242,15 +242,15 @@ allow(){
 
     list_rule
 
-    echo && read -p "请输入需要放行的IP地址:" ip
+    echo && read -e -p "请输入需要放行的IP地址:" ip
 
     checkIp "$ip"
 
-    echo && read -p "请输入需要放行的端口:" port
+    echo && read -e -p "请输入需要放行的端口:" port
 
     checkPort "$port"
 
-    echo && read -p "请输入需要放行的协议 1.TCP 2.UDP 3.ALL:" tua
+    echo && read -e -p "请输入需要放行的协议 1.TCP 2.UDP 3.ALL:" tua
 
     if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(/[0-9]+)?$ ]]; then
 
@@ -294,7 +294,7 @@ allow(){
 
     save
 
-    echo && read -p "放行 $ip 的 $port 端口成功！是否继续放行？ 1.继续放行 0.回到主菜单" cont
+    echo && read -e -p "放行 $ip 的 $port 端口成功！是否继续放行？ 1.继续放行 0.回到主菜单" cont
 
     case "${cont}" in
     0)
@@ -316,7 +316,7 @@ block(){
 
     list_rule
 
-    echo && read -p "请输入需要封锁的地区:" country
+    echo && read -e -p "请输入需要封锁的地区:" country
 
     rm $tempdir/$ipFile
 
@@ -327,14 +327,14 @@ block(){
         exit 1
     fi
 
-    echo && read -p "请输入需要封锁的端口:" port
+    echo && read -e -p "请输入需要封锁的端口:" port
 
     if ! [[ "$port" =~ ^[0-9]+$ ]] || [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
         echo "Invalid port number."
         exit 1
     fi
 
-    echo && read -p "请输入需要封锁的协议 1.TCP 2.UDP 3.ALL:" tua
+    echo && read -e -p "请输入需要封锁的协议 1.TCP 2.UDP 3.ALL:" tua
 
     if ipset list | grep "^Name: ${country}_4"; then
         :
@@ -385,7 +385,7 @@ block(){
 
     save
 
-    echo && read -p "封禁 $country 的 $port 端口成功！是否继续封禁？ 1.继续封禁 2.回到主菜单" cont
+    echo && read -e -p "封禁 $country 的 $port 端口成功！是否继续封禁？ 1.继续封禁 2.回到主菜单" cont
 
     case "${cont}" in
     1)
@@ -474,7 +474,7 @@ delete_rules() {
     all_count=$((ipv4_count + ipv6_count))
 
     # 提示用户选择要删除的规则
-    read -p "请输入要删除的规则序号，或者按0回到主菜单：" rule_number
+    read -e -p "请输入要删除的规则序号，或者按0回到主菜单：" rule_number
 
     if [ "$rule_number" -eq 0 ]; then
 
