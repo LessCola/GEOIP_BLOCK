@@ -504,11 +504,11 @@ delete_all(){
 
     ipset list | awk '/^Name:/ {print $2}' | xargs -I {} ipset destroy {}
 
-    [ -f "$IPSET_CONF" ] && rm "$IPSET_CONF"
+    [ -f "$IPSET_CONF" ] && rm "$IPSET_CONF" 2>/dev/null
 
-    [ -f "$IPTABLES4_CONF" ] && rm "$IPTABLES4_CONF"
+    [ -f "$IPTABLES4_CONF" ] && rm "$IPTABLES4_CONF" 2>/dev/null
 
-    [ -f "$IPTABLES6_CONF" ] && rm "$IPTABLES6_CONF"
+    [ -f "$IPTABLES6_CONF" ] && rm "$IPTABLES6_CONF" 2>/dev/null
 
     echo '删除所有规则成功'
 
