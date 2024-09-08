@@ -307,7 +307,7 @@ block(){
 
     rm $tempdir/$ipFile 2>/dev/null
 
-    wget -q --show-progress -P "$tempdir" "$ipURL"
+    wget -P "$tempdir" "$ipURL" 1>/dev/null
 
     if [ $? -ne 0 ]; then
         echo "Failed to download IP address list from ${ipURL}"
