@@ -398,6 +398,7 @@ block(){
                 LOGE "请输入正确的选项 [1-2]"
                 ;;
             esac
+            ;;
         2)
             echo && read -e -p "请输入需要封锁的IP段 (如: 192.168.1.0/24): " ipRange
 
@@ -459,6 +460,8 @@ block(){
                         LOGE "请输入正确的选项 [1-2]"
                         ;;
                 esac
+            ;;
+        esac
 }
 
 delete_rules() {
