@@ -460,8 +460,8 @@ block(){
                         LOGE "请输入正确的选项 [1-2]"
                         ;;
                 esac
-            ;;
-        esac
+        ;;
+    esac
 }
 
 delete_rules() {
