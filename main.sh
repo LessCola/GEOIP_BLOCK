@@ -373,11 +373,11 @@ block() {
 
             echo && read -e -p "请输入需要封锁的端口: " port
 
-            if ! [[ "$port" =~ ^[0-9]+$ ]] || [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]]; then
+            if ! [[ "$port" =~ ^[0-9]+$ && "$port" -ge 1 && "$port" -le 65535 ]]; then
                 echo "Invalid port number."
                 exit 1
             fi
-            
+        
             echo && read -e -p "请输入需要封锁的协议 1.TCP 2.UDP 3.ALL: " tua
             
             if [[ $ipRange =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+$ ]]; then
