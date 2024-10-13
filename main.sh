@@ -446,7 +446,7 @@ block(){
                 
                 save
                 
-                echo && read -e -p "封禁 $country 的 $port 端口成功！是否继续封禁？ 1.继续封禁 2.回到主菜单" cont
+                echo && read -e -p "封禁 $ip 的 $port 端口成功！是否继续封禁？ 1.继续封禁 2.回到主菜单" cont
                 
                 case "${cont}" in
                     1)
