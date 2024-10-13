@@ -302,99 +302,163 @@ block(){
     clear
 
     list_rule
+    
+    echo && read -e -p "请选择封禁模式: 1.根据城市封禁 2.根据IP段封禁: " mode
 
-    echo && read -e -p "请输入需要封锁的地区:" country
-
-    rm $tempdir/$ipFile 2>/dev/null
-
-    wget -P "$tempdir" "$ipURL" 1>/dev/null
-
-    if [ $? -ne 0 ]; then
-        echo "Failed to download IP address list from ${ipURL}"
-        exit 1
-    fi
-
-    echo && read -e -p "请输入需要封锁的端口:" port
-
-    if ! [[ "$port" =~ ^[0-9]+$ ]] || [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
-        echo "Invalid port number."
-        exit 1
-    fi
-
-    echo && read -e -p "请输入需要封锁的协议 1.TCP 2.UDP 3.ALL:" tua
-
-    if ipset list 2>/dev/null | grep "^Name: ${country}_4"; then
-        :
-    else
-
-        ipset create "${country}_4" hash:net 2>/dev/null
-
-        # 读取文件并添加 IP 地址到 ipset 集合
-        while IFS= read -r ip; do
-            if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+$ ]]; then
-                ipset add "${country}_4" "$ip" -exist
-            else
-                :
-            fi
-        done < "$tempdir/$ipFile"
-    fi
-
-    if ipset list 2>/dev/null | grep "^Name: ${country}_6"; then
-        :
-    else
-
-        ipset create "${country}_6" hash:net family inet6 2>/dev/null
-
-        # 读取文件并添加 IP 地址到 ipset 集合
-        while IFS= read -r ip; do
-
-            if [[ $ip =~ ^[0-9a-fA-F:]+/[0-9]+$ ]]; then
-                ipset add "${country}_6" "$ip" -exist
-            else
-                :
-            fi
-
-        done < "$tempdir/$ipFile"
-        rm $tempdir/$ipFile
-    fi
-
-    case $tua in
+    case "$mode" in
         1)
-            iptables -A GEO_BLOCK -i eth0 -p tcp --dport $port -m set --match-set "${country}_4" src -j DROP      
-            ip6tables -A GEO_BLOCK -i eth0 -p tcp --dport $port -m set --match-set "${country}_6" src -j DROP    
-            ;;
+            echo && read -e -p "请输入需要封锁的地区:" country
+        
+            rm $tempdir/$ipFile 2>/dev/null
+        
+            wget -P "$tempdir" "$ipURL" 1>/dev/null
+        
+            if [ $? -ne 0 ]; then
+                echo "Failed to download IP address list from ${ipURL}"
+                exit 1
+            fi
+        
+            echo && read -e -p "请输入需要封锁的端口:" port
+        
+            if ! [[ "$port" =~ ^[0-9]+$ ]] || [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
+                echo "Invalid port number."
+                exit 1
+            fi
+        
+            echo && read -e -p "请输入需要封锁的协议 1.TCP 2.UDP 3.ALL:" tua
+        
+            if ipset list 2>/dev/null | grep "^Name: ${country}_4"; then
+                :
+            else
+        
+                ipset create "${country}_4" hash:net 2>/dev/null
+        
+                # 读取文件并添加 IP 地址到 ipset 集合
+                while IFS= read -r ip; do
+                    if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+$ ]]; then
+                        ipset add "${country}_4" "$ip" -exist
+                    else
+                        :
+                    fi
+                done < "$tempdir/$ipFile"
+            fi
+        
+            if ipset list 2>/dev/null | grep "^Name: ${country}_6"; then
+                :
+            else
+        
+                ipset create "${country}_6" hash:net family inet6 2>/dev/null
+        
+                # 读取文件并添加 IP 地址到 ipset 集合
+                while IFS= read -r ip; do
+        
+                    if [[ $ip =~ ^[0-9a-fA-F:]+/[0-9]+$ ]]; then
+                        ipset add "${country}_6" "$ip" -exist
+                    else
+                        :
+                    fi
+        
+                done < "$tempdir/$ipFile"
+                rm $tempdir/$ipFile
+            fi
+        
+            case $tua in
+                1)
+                    iptables -A GEO_BLOCK -i eth0 -p tcp --dport $port -m set --match-set "${country}_4" src -j DROP      
+                    ip6tables -A GEO_BLOCK -i eth0 -p tcp --dport $port -m set --match-set "${country}_6" src -j DROP    
+                    ;;
+                2)
+                    iptables -A GEO_BLOCK -i eth0 -p udp --dport $port -m set --match-set "${country}_4" src -j DROP      
+                    ip6tables -A GEO_BLOCK -i eth0 -p udp --dport $port -m set --match-set "${country}_6" src -j DROP     
+                    ;;
+                3)
+                    iptables -A GEO_BLOCK -i eth0 -p tcp --dport $port -m set --match-set "${country}_4" src -j DROP      
+                    ip6tables -A GEO_BLOCK -i eth0 -p tcp --dport $port -m set --match-set "${country}_6" src -j DROP  
+                    iptables -A GEO_BLOCK -i eth0 -p udp --dport $port -m set --match-set "${country}_4" src -j DROP      
+                    ip6tables -A GEO_BLOCK -i eth0 -p udp --dport $port -m set --match-set "${country}_6" src -j DROP 
+                    ;;
+            esac
+        
+            clear
+        
+            list_rule
+        
+            save
+        
+            echo && read -e -p "封禁 $country 的 $port 端口成功！是否继续封禁？ 1.继续封禁 2.回到主菜单" cont
+        
+            case "${cont}" in
+            1)
+                block
+                ;;
+            2)
+                show_menu
+                ;;
+            *)
+                LOGE "请输入正确的选项 [1-2]"
+                ;;
+            esac
         2)
-            iptables -A GEO_BLOCK -i eth0 -p udp --dport $port -m set --match-set "${country}_4" src -j DROP      
-            ip6tables -A GEO_BLOCK -i eth0 -p udp --dport $port -m set --match-set "${country}_6" src -j DROP     
-            ;;
-        3)
-            iptables -A GEO_BLOCK -i eth0 -p tcp --dport $port -m set --match-set "${country}_4" src -j DROP      
-            ip6tables -A GEO_BLOCK -i eth0 -p tcp --dport $port -m set --match-set "${country}_6" src -j DROP  
-            iptables -A GEO_BLOCK -i eth0 -p udp --dport $port -m set --match-set "${country}_4" src -j DROP      
-            ip6tables -A GEO_BLOCK -i eth0 -p udp --dport $port -m set --match-set "${country}_6" src -j DROP 
-            ;;
-    esac
+            echo && read -e -p "请输入需要封锁的IP段 (如: 192.168.1.0/24): " ipRange
 
-    clear
+            echo && read -e -p "请输入需要封锁的端口: " port
 
-    list_rule
-
-    save
-
-    echo && read -e -p "封禁 $country 的 $port 端口成功！是否继续封禁？ 1.继续封禁 2.回到主菜单" cont
-
-    case "${cont}" in
-    1)
-        block
-        ;;
-    2)
-        show_menu
-        ;;
-    *)
-        LOGE "请输入正确的选项 [1-2]"
-        ;;
-    esac
-
+            if ! [[ "$port" =~ ^[0-9]+$ ]] || [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
+                echo "Invalid port number."
+                exit 1
+            fi
+            
+            echo && read -e -p "请输入需要封锁的协议 1.TCP 2.UDP 3.ALL: " tua
+            
+            if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(/[0-9]+)?$ ]]; then
+        
+                case $tua in
+                    1)
+                        iptables -I $CHAIN_NAME 1 -i eth0 -p tcp -s "$ip" --dport "$port" -j DROP
+                        ;;
+                    2)
+                        iptables -I $CHAIN_NAME 1 -i eth0 -p udp -s "$ip" --dport "$port" -j DROP
+                        ;;
+                    3)
+                        iptables -I $CHAIN_NAME 1 -i eth0 -p tcp -s "$ip" --dport "$port" -j DROP
+                        iptables -I $CHAIN_NAME 1 -i eth0 -p udp -s "$ip" --dport "$port" -j DROP
+                        ;;
+                esac
+        
+            elif [ "$ip" != "${1#*:[0-9a-fA-F]}" ]; then
+        
+                case $tua in
+                    1)
+                        ip6tables -I $CHAIN_NAME 1 -i eth0 -p tcp -s $ip --dport $port -j DROP
+                        ;;
+                    2)
+                        ip6tables -I $CHAIN_NAME 1 -i eth0 -p udp -s $ip --dport $port -j DROP
+                        ;;
+                    3)
+                        ip6tables -I $CHAIN_NAME 1 -i eth0 -p tcp -s $ip --dport $port -j DROP
+                        ip6tables -I $CHAIN_NAME 1 -i eth0 -p udp -s $ip --dport $port -j DROP
+                        ;;
+                esac
+                
+                clear
+                
+                list_rule
+                
+                save
+                
+                echo && read -e -p "封禁 $country 的 $port 端口成功！是否继续封禁？ 1.继续封禁 2.回到主菜单" cont
+                
+                case "${cont}" in
+                    1)
+                        block
+                        ;;
+                    2)
+                        show_menu
+                        ;;
+                    *)
+                        LOGE "请输入正确的选项 [1-2]"
+                        ;;
+                esac
 }
 
 delete_rules() {
