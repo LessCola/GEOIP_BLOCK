@@ -95,6 +95,7 @@ chech_status(){
         # 创建链并添加到 INPUT 链
         echo "Creating chain $CHAIN_NAME and adding to INPUT."
         iptables -N $CHAIN_NAME
+        iptables -I $CHAIN_NAME 1 -i eth0 -p tcp -s 0.0.0.0/0 --dport 22 -j ACCEPT
         iptables -A $CHAIN_NAME -j DROP
         iptables -A INPUT -j $CHAIN_NAME
     fi
@@ -105,6 +106,7 @@ chech_status(){
         # 创建链并添加到 INPUT 链
         echo "Creating chain $CHAIN_NAME and adding to INPUT."
         ip6tables -N $CHAIN_NAME
+        ip6tables -I $CHAIN_NAME 1 -i eth0 -p tcp -s 0.0.0.0/0 --dport 22 -j ACCEPT
         ip6tables -A $CHAIN_NAME -j DROP
         ip6tables -A INPUT -j $CHAIN_NAME
     fi
