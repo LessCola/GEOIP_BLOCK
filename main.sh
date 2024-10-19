@@ -129,8 +129,6 @@ check_status() {
 
 show_menu() {
 
-    clear
-
     echo -e "
 GEO-IP-BLOCK 管理脚本
 ${green}0.${plain} 退出脚本
