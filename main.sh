@@ -210,7 +210,7 @@ list_rule(){
         port = ($8 ~ /^dpt:/) ? substr($8, 5) : "N/A"
         region = ($10 != "") ? $10 : "N/A"
 
-        printf "%-15s %-15s %-20s %-15s %-15s %-15s\n", NR-2, $2, ip, region, protocol, port
+        printf "%-15s %-15s %-20s %-15s %-15s %-15s\n", NR-2+offset, $2, ip, region, protocol, port
     }')
 
     if [ -n "$ip6tables_rules" ]; then
@@ -554,7 +554,7 @@ delete_rules() {
         port = ($8 ~ /^dpt:/) ? substr($8, 5) : "N/A"
         region = ($10 != "") ? $10 : "N/A"
 
-        printf "%-15s %-15s %-20s %-15s %-15s %-15s\n", NR-2, $2, ip, region, protocol, port
+        printf "%-15s %-15s %-20s %-15s %-15s %-15s\n", NR-2+offset, $2, ip, region, protocol, port
     }')
 
     if [ -n "$ip6tables_rules" ]; then
