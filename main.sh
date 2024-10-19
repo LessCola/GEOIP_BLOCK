@@ -169,7 +169,7 @@ list_rule(){
     printf "%-15s %-15s %-15s %-15s %-15s %-15s %-15s\n" "序号" "动作" "IP" "地区" "协议" "目标端口"
 
     # 获取并格式化 iptables 规则
-    iptables_rules=$(iptables -L $CHAIN_NAME --line-numbers -n | awk 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $9}')
+    iptables_rules=$(iptables -L $CHAIN_NAME --line-numbers -n | awk 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $10}')
 
     if [ -n "$iptables_rules" ]; then
         echo "$iptables_rules" | awk '
@@ -196,7 +196,7 @@ list_rule(){
     # echo $ipv4_count
 
     # 获取并格式化 ip6tables 规则
-    ip6tables_rules=$(ip6tables -L $CHAIN_NAME --line-numbers -n | awk -v offset=$((ipv4_count)) 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $9}')
+    ip6tables_rules=$(ip6tables -L $CHAIN_NAME --line-numbers -n | awk -v offset=$((ipv4_count)) 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $10}')
 
     if [ -n "$ip6tables_rules" ]; then
         echo "$ip6tables_rules" | awk '
@@ -470,7 +470,7 @@ delete_rules() {
     printf "%-15s %-15s %-15s %-15s %-15s %-15s %-15s\n" "序号" "动作" "IP" "地区" "协议" "目标端口"
 
     # 获取并格式化 iptables 规则
-    iptables_rules=$(iptables -L $CHAIN_NAME --line-numbers -n | awk 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $9}')
+    iptables_rules=$(iptables -L $CHAIN_NAME --line-numbers -n | awk 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $10}')
 
     if [ -n "$iptables_rules" ]; then
         echo "$iptables_rules" | awk '
@@ -497,7 +497,7 @@ delete_rules() {
     # echo $ipv4_count
 
     # 获取并格式化 ip6tables 规则
-    ip6tables_rules=$(ip6tables -L $CHAIN_NAME --line-numbers -n | awk -v offset=$((ipv4_count)) 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $9}')
+    ip6tables_rules=$(ip6tables -L $CHAIN_NAME --line-numbers -n | awk -v offset=$((ipv4_count)) 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $10}')
 
     if [ -n "$ip6tables_rules" ]; then
         echo "$ip6tables_rules" | awk '
