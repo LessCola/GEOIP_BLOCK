@@ -335,16 +335,7 @@ block() {
                     echo "Failed to download IP address list from ${ipURL}"
                     exit 1
                 fi
-                
-                echo && read -e -p "请输入需要封锁的端口: " port
-                
-                if ! [[ "$port" =~ ^[0-9]+$ ]] || [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
-                    echo "Invalid port number."
-                    exit 1
-                fi
-                
-                echo && read -e -p "请输入需要封锁的协议 1.TCP 2.UDP 3.ALL: " tua
-                
+
                 # 创建 ipset 集合 ${country}_4
                 if ! ipset list 2>/dev/null | grep "^Name: ${country}_4"; then
                     ipset create "${country}_4" hash:net 2>/dev/null
@@ -371,6 +362,16 @@ block() {
                 rm $tempdir/$ipFile
             fi
 
+            # 即使 IP 集合已经存在，也要输入端口和协议
+            echo && read -e -p "请输入需要封锁的端口: " port
+            
+            if ! [[ "$port" =~ ^[0-9]+$ ]] || [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
+                echo "Invalid port number."
+                exit 1
+            fi
+            
+            echo && read -e -p "请输入需要封锁的协议 1.TCP 2.UDP 3.ALL: " tua
+
             case $tua in
                 1)
                     iptables -A GEO_BLOCK -p tcp --dport $port -m set --match-set "${country}_4" src -j DROP      
@@ -390,48 +391,79 @@ block() {
             ;;
         
         2)
-            # 输入 IP 段，如果未输入，默认 0.0.0.0/0
-            echo && read -e -p "请输入需要封锁的IP段 (默认: 0.0.0.0/0): " ipRange
-            ipRange=${ipRange:-0.0.0.0/0}  # 设置默认值为 0.0.0.0/0
-
+            echo && read -e -p "请输入需要封锁的IP段 (默认: 选择 1.封禁 IPv4 2.封禁 IPv6): " ipRange
+            
+            if [[ -z "$ipRange" ]]; then
+                # 用户未输入 IP 段，提示选择 IPv4 或 IPv6
+                echo && read -e -p "请选择封禁协议: 1.IPv4 2.IPv6: " ipVersion
+            
+                case "$ipVersion" in
+                    1)
+                        ip4Range="0.0.0.0/0"  # 默认封禁所有 IPv4 地址
+                        ip6Range=""  # 不封禁 IPv6
+                        ;;
+                    2)
+                        ip6Range="::/0"  # 默认封禁所有 IPv6 地址
+                        ip4Range=""  # 不封禁 IPv4
+                        ;;
+                    *)
+                        echo "无效的选项，请输入 1 或 2."
+                        exit 1
+                        ;;
+                esac
+                
+            elif [[ $ipRange =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+$ ]]; then
+                ip4Range="$ipRange"  # 输入的是 IPv4 范围
+                ip6Range="::/0"  # IPv6 默认
+                
+            elif [[ $ipRange =~ ^[0-9a-fA-F:]+/[0-9]+$ ]]; then
+                ip6Range="$ipRange"  # 输入的是 IPv6 范围
+                ip4Range="0.0.0.0/0"  # IPv4 默认
+            else
+                echo "Invalid IP range format."
+                exit 1
+            fi
+            
+            # 输入端口
             echo && read -e -p "请输入需要封锁的端口: " port
-
             if ! [[ "$port" =~ ^[0-9]+$ && "$port" -ge 1 && "$port" -le 65535 ]]; then
                 echo "Invalid port number."
                 exit 1
             fi
-        
+            
+            # 输入协议
             echo && read -e -p "请输入需要封锁的协议 1.TCP 2.UDP 3.ALL: " tua
             
-            if [[ $ipRange =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+$ ]]; then
+            # 针对 IPv4 的 iptables 规则
+            if [[ "$ip4Range" != "" ]]; then
                 case $tua in
                     1)
-                        iptables -I $CHAIN_NAME 1 -p tcp -s "$ipRange" --dport "$port" -j DROP
+                        iptables -I $CHAIN_NAME 1 -p tcp -s "$ip4Range" --dport "$port" -j DROP
                         ;;
                     2)
-                        iptables -I $CHAIN_NAME 1 -p udp -s "$ipRange" --dport "$port" -j DROP
+                        iptables -I $CHAIN_NAME 1 -p udp -s "$ip4Range" --dport "$port" -j DROP
                         ;;
                     3)
-                        iptables -I $CHAIN_NAME 1 -p tcp -s "$ipRange" --dport "$port" -j DROP
-                        iptables -I $CHAIN_NAME 1 -p udp -s "$ipRange" --dport "$port" -j DROP
+                        iptables -I $CHAIN_NAME 1 -p tcp -s "$ip4Range" --dport "$port" -j DROP
+                        iptables -I $CHAIN_NAME 1 -p udp -s "$ip4Range" --dport "$port" -j DROP
                         ;;
                 esac
-            elif [[ $ipRange =~ ^[0-9a-fA-F:]+/[0-9]+$ ]]; then
+            fi
+            
+            # 针对 IPv6 的 ip6tables 规则
+            if [[ "$ip6Range" != "" ]]; then
                 case $tua in
                     1)
-                        ip6tables -I $CHAIN_NAME 1 -p tcp -s "$ipRange" --dport "$port" -j DROP
+                        ip6tables -I $CHAIN_NAME 1 -p tcp -s "$ip6Range" --dport "$port" -j DROP
                         ;;
                     2)
-                        ip6tables -I $CHAIN_NAME 1 -p udp -s "$ipRange" --dport "$port" -j DROP
+                        ip6tables -I $CHAIN_NAME 1 -p udp -s "$ip6Range" --dport "$port" -j DROP
                         ;;
                     3)
-                        ip6tables -I $CHAIN_NAME 1 -p tcp -s "$ipRange" --dport "$port" -j DROP
-                        ip6tables -I $CHAIN_NAME 1 -p udp -s "$ipRange" --dport "$port" -j DROP
+                        ip6tables -I $CHAIN_NAME 1 -p tcp -s "$ip6Range" --dport "$port" -j DROP
+                        ip6tables -I $CHAIN_NAME 1 -p udp -s "$ip6Range" --dport "$port" -j DROP
                         ;;
                 esac
-            else
-                echo "Invalid IP range format."
-                exit 1
             fi
             ;;
         *)
@@ -460,6 +492,7 @@ block() {
             ;;
     esac
 }
+
 
 delete_rules() {
 
