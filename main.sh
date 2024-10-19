@@ -322,47 +322,55 @@ block() {
     case "$mode" in
         1)
             echo && read -e -p "请输入需要封锁的地区: " country
-        
-            rm $tempdir/$ipFile 2>/dev/null
-        
-            wget -P "$tempdir" "$ipURL" 1>/dev/null
-        
-            if [ $? -ne 0 ]; then
-                echo "Failed to download IP address list from ${ipURL}"
-                exit 1
-            fi
-        
-            echo && read -e -p "请输入需要封锁的端口: " port
-        
-            if ! [[ "$port" =~ ^[0-9]+$ ]] || [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
-                echo "Invalid port number."
-                exit 1
-            fi
-        
-            echo && read -e -p "请输入需要封锁的协议 1.TCP 2.UDP 3.ALL: " tua
-        
-            if ! ipset list 2>/dev/null | grep "^Name: ${country}_4"; then
-                ipset create "${country}_4" hash:net 2>/dev/null
-            fi
-
-            # 读取文件并添加 IPv4 地址到 ipset 集合
-            while IFS= read -r ip; do
-                if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+$ ]]; then
-                    ipset add "${country}_4" "$ip" -exist
+            
+            # 检查 ipset 集合是否已经存在
+            if ipset list 2>/dev/null | grep "^Name: ${country}_4" && ipset list 2>/dev/null | grep "^Name: ${country}_6"; then
+                echo "IP 地址集合 ${country}_4 和 ${country}_6 已存在，不需要重复下载。"
+            else
+                # 集合不存在，执行下载并创建集合
+                rm $tempdir/$ipFile 2>/dev/null
+                
+                wget -P "$tempdir" "$ipURL" 1>/dev/null
+                
+                if [ $? -ne 0 ]; then
+                    echo "Failed to download IP address list from ${ipURL}"
+                    exit 1
                 fi
-            done < "$tempdir/$ipFile"
-        
-            if ! ipset list 2>/dev/null | grep "^Name: ${country}_6"; then
-                ipset create "${country}_6" hash:net family inet6 2>/dev/null
-            fi
-
-            # 读取文件并添加 IPv6 地址到 ipset 集合
-            while IFS= read -r ip; do
-                if [[ $ip =~ ^[0-9a-fA-F:]+/[0-9]+$ ]]; then
-                    ipset add "${country}_6" "$ip" -exist
+                
+                echo && read -e -p "请输入需要封锁的端口: " port
+                
+                if ! [[ "$port" =~ ^[0-9]+$ ]] || [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
+                    echo "Invalid port number."
+                    exit 1
                 fi
-            done < "$tempdir/$ipFile"
-            rm $tempdir/$ipFile
+                
+                echo && read -e -p "请输入需要封锁的协议 1.TCP 2.UDP 3.ALL: " tua
+                
+                # 创建 ipset 集合 ${country}_4
+                if ! ipset list 2>/dev/null | grep "^Name: ${country}_4"; then
+                    ipset create "${country}_4" hash:net 2>/dev/null
+                fi
+
+                # 读取文件并添加 IPv4 地址到 ipset 集合
+                while IFS= read -r ip; do
+                    if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+$ ]]; then
+                        ipset add "${country}_4" "$ip" -exist
+                    fi
+                done < "$tempdir/$ipFile"
+                
+                # 创建 ipset 集合 ${country}_6
+                if ! ipset list 2>/dev/null | grep "^Name: ${country}_6"; then
+                    ipset create "${country}_6" hash:net family inet6 2>/dev/null
+                fi
+
+                # 读取文件并添加 IPv6 地址到 ipset 集合
+                while IFS= read -r ip; do
+                    if [[ $ip =~ ^[0-9a-fA-F:]+/[0-9]+$ ]]; then
+                        ipset add "${country}_6" "$ip" -exist
+                    fi
+                done < "$tempdir/$ipFile"
+                rm $tempdir/$ipFile
+            fi
 
             case $tua in
                 1)
@@ -383,7 +391,9 @@ block() {
             ;;
         
         2)
-            echo && read -e -p "请输入需要封锁的IP段 (如: 192.168.1.0/24): " ipRange
+            # 输入 IP 段，如果未输入，默认 0.0.0.0/0
+            echo && read -e -p "请输入需要封锁的IP段 (默认: 0.0.0.0/0): " ipRange
+            ipRange=${ipRange:-0.0.0.0/0}  # 设置默认值为 0.0.0.0/0
 
             echo && read -e -p "请输入需要封锁的端口: " port
 
@@ -451,7 +461,6 @@ block() {
             ;;
     esac
 }
-
 
 delete_rules() {
 
