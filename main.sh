@@ -164,24 +164,26 @@ ${green}5.${plain} 清空规则
 
 list_rule(){
 
-    printf "%-15s %-15s %-15s %-15s %-15s %-15s %-15s\n" "序号" "动作" "IP" "地区" "协议" "目标端口"
+    printf "%-15s %-15s %-15s %-15s %-15s %-15s \n" "序号" "动作" "IP" "地区" "协议" "目标端口"
 
     # 获取并格式化 iptables 规则
-    iptables_rules=$(iptables -L $CHAIN_NAME --line-numbers -n | awk 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $8}')
+    iptables_rules=$(iptables -L $CHAIN_NAME --line-numbers -n | awk 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", NR-2+offset, $2, $5, $10, $7, $8}')
 
     if [ -n "$iptables_rules" ]; then
         echo "$iptables_rules" | awk '
         {
             # 如果第7字段以 "dpt:" 开头，表示这是端口信息
-            port = ($5 ~ /^dpt:/) ? substr($5, 5) : "N/A"
+            port = ($6 ~ /^dpt:/) ? substr($5, 5) : "N/A"
         
-            # 如果 $3 是 0.0.0.0/0 或 ::/0，b[1] 等于 "ALL"
-            if ($3 == "0.0.0.0/0" || $3 == "::/0") {
-                b[1] = "ALL";
+            if ($4 == "") {
+                IP = "0.0.0.0/0";
+            }
+            else {
+                $3 = "N/A";
             }
             
             # 打印格式化输出
-            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, b[1], $4, port
+            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, $4, $5, port
         }'
 
     else
@@ -202,13 +204,15 @@ list_rule(){
             # 如果第7字段以 "dpt:" 开头，表示这是端口信息
             port = ($5 ~ /^dpt:/) ? substr($5, 5) : "N/A"
         
-            # 如果 $3 是 0.0.0.0/0 或 ::/0，b[1] 等于 "ALL"
-            if ($3 == "0.0.0.0/0" || $3 == "::/0") {
-                b[1] = "ALL";
+            if ($4 == "") {
+                IP = "::/0";
+            }
+            else {
+                $3 = "N/A";
             }
             
             # 打印格式化输出
-            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, b[1], $4, port
+            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, $4, $5, port
         }'
 
     else
@@ -501,21 +505,23 @@ delete_rules() {
     printf "%-15s %-15s %-15s %-15s %-15s %-15s %-15s\n" "序号" "动作" "IP" "地区" "协议" "目标端口"
 
     # 获取并格式化 iptables 规则
-    iptables_rules=$(iptables -L $CHAIN_NAME --line-numbers -n | awk 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $8}')
+    iptables_rules=$(iptables -L $CHAIN_NAME --line-numbers -n | awk 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", NR-2+offset, $2, $5, $10, $7, $8}')
 
     if [ -n "$iptables_rules" ]; then
         echo "$iptables_rules" | awk '
         {
             # 如果第7字段以 "dpt:" 开头，表示这是端口信息
-            port = ($5 ~ /^dpt:/) ? substr($5, 5) : "N/A"
+            port = ($6 ~ /^dpt:/) ? substr($5, 5) : "N/A"
         
-            # 如果 $3 是 0.0.0.0/0 或 ::/0，b[1] 等于 "ALL"
-            if ($3 == "0.0.0.0/0" || $3 == "::/0") {
-                b[1] = "ALL";
+            if ($4 == "") {
+                IP = "0.0.0.0/0";
+            }
+            else {
+                $3 = "N/A";
             }
             
             # 打印格式化输出
-            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, b[1], $4, port
+            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, $4, $5, port
         }'
 
     else
@@ -536,13 +542,15 @@ delete_rules() {
             # 如果第7字段以 "dpt:" 开头，表示这是端口信息
             port = ($5 ~ /^dpt:/) ? substr($5, 5) : "N/A"
         
-            # 如果 $3 是 0.0.0.0/0 或 ::/0，b[1] 等于 "ALL"
-            if ($3 == "0.0.0.0/0" || $3 == "::/0") {
-                b[1] = "ALL";
+            if ($4 == "") {
+                IP = "::/0";
+            }
+            else {
+                $3 = "N/A";
             }
             
             # 打印格式化输出
-            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, b[1], $4, port
+            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, $4, $5, port
         }'
 
     else
