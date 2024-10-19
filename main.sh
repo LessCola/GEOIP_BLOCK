@@ -622,7 +622,7 @@ restore() {
 if [ "$1" = "restore" ]; then
     restore
 else
-    chech_status
+    check_status
     show_menu
 fi
 
