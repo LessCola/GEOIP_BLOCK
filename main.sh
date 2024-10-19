@@ -174,16 +174,16 @@ list_rule(){
     if [ -n "$iptables_rules" ]; then
         echo "$iptables_rules" | awk '
         {
-            # 处理分割字段
-            split($8, a, ":");
-            split($6, b, "_");
-
+            # 如果第7字段以 "dpt:" 开头，表示这是端口信息
+            port = ($5 ~ /^dpt:/) ? substr($5, 5) : "N/A"
+        
+            # 如果 $3 是 0.0.0.0/0 或 ::/0，b[1] 等于 "ALL"
             if ($3 == "0.0.0.0/0" || $3 == "::/0") {
                 b[1] = "ALL";
             }
-
+            
             # 打印格式化输出
-            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, b[1], $4, a[2]
+            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, b[1], $4, port
         }'
 
     else
@@ -201,16 +201,16 @@ list_rule(){
     if [ -n "$ip6tables_rules" ]; then
         echo "$ip6tables_rules" | awk '
         {
-            # 处理分割字段
-            split($8, a, ":");
-            split($6, b, "_");
-            
+            # 如果第7字段以 "dpt:" 开头，表示这是端口信息
+            port = ($5 ~ /^dpt:/) ? substr($5, 5) : "N/A"
+        
+            # 如果 $3 是 0.0.0.0/0 或 ::/0，b[1] 等于 "ALL"
             if ($3 == "0.0.0.0/0" || $3 == "::/0") {
                 b[1] = "ALL";
             }
             
             # 打印格式化输出
-            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, b[1], $4, a[2]
+            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, b[1], $4, port
         }'
 
     else
@@ -475,16 +475,16 @@ delete_rules() {
     if [ -n "$iptables_rules" ]; then
         echo "$iptables_rules" | awk '
         {
-            # 处理分割字段
-            split($8, a, ":");
-            split($6, b, "_");
-
+            # 如果第7字段以 "dpt:" 开头，表示这是端口信息
+            port = ($5 ~ /^dpt:/) ? substr($5, 5) : "N/A"
+        
+            # 如果 $3 是 0.0.0.0/0 或 ::/0，b[1] 等于 "ALL"
             if ($3 == "0.0.0.0/0" || $3 == "::/0") {
                 b[1] = "ALL";
             }
-
+            
             # 打印格式化输出
-            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, b[1], $4, a[2]
+            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, b[1], $4, port
         }'
 
     else
@@ -502,16 +502,16 @@ delete_rules() {
     if [ -n "$ip6tables_rules" ]; then
         echo "$ip6tables_rules" | awk '
         {
-            # 处理分割字段
-            split($8, a, ":");
-            split($6, b, "_");
-            
+            # 如果第7字段以 "dpt:" 开头，表示这是端口信息
+            port = ($5 ~ /^dpt:/) ? substr($5, 5) : "N/A"
+        
+            # 如果 $3 是 0.0.0.0/0 或 ::/0，b[1] 等于 "ALL"
             if ($3 == "0.0.0.0/0" || $3 == "::/0") {
                 b[1] = "ALL";
             }
             
             # 打印格式化输出
-            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, b[1], $4, a[2]
+            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, b[1], $4, port
         }'
 
     else
