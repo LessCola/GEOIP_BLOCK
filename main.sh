@@ -112,7 +112,6 @@ check_status() {
         iptables -N $CHAIN_NAME
         iptables -A INPUT -j $CHAIN_NAME
         iptables -I $CHAIN_NAME 1 -p tcp -s 0.0.0.0/0 --dport 22 -j ACCEPT
-        iptables -A $CHAIN_NAME -j DROP
     fi
 
     # 检查并创建 IPv6 链
@@ -123,7 +122,6 @@ check_status() {
         ip6tables -N $CHAIN_NAME
         ip6tables -A INPUT -j $CHAIN_NAME
         ip6tables -I $CHAIN_NAME 1 -p tcp -s ::/0 --dport 22 -j ACCEPT
-        ip6tables -A $CHAIN_NAME -j DROP
     fi
 }
 
