@@ -111,7 +111,6 @@ check_status() {
         echo "Creating IPv4 chain $CHAIN_NAME and adding to INPUT."
         iptables -N $CHAIN_NAME
         iptables -A INPUT -j $CHAIN_NAME
-        iptables -I $CHAIN_NAME 1 -p tcp -s 0.0.0.0/0 --dport 22 -j ACCEPT
     fi
 
     # 检查并创建 IPv6 链
@@ -121,7 +120,6 @@ check_status() {
         echo "Creating IPv6 chain $CHAIN_NAME and adding to INPUT."
         ip6tables -N $CHAIN_NAME
         ip6tables -A INPUT -j $CHAIN_NAME
-        ip6tables -I $CHAIN_NAME 1 -p tcp -s ::/0 --dport 22 -j ACCEPT
     fi
 }
 
