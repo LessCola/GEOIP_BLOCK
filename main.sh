@@ -67,28 +67,33 @@ function LOGD() {
     echo -e "${yellow}[DEG] $* ${plain}"
 }
 
-chech_status(){
+check_status() {
 
+    # 检查 bash 是否安装
     if ! command -v bash &> /dev/null; then
         echo "bash is not installed. Please install it first."
         exit 1
     fi
 
+    # 检查 iptables 是否安装
     if ! command -v iptables &> /dev/null; then
         echo "iptables is not installed. Please install it first."
         exit 1
     fi
 
+    # 检查 ip6tables 是否安装
     if ! command -v ip6tables &> /dev/null; then
-        echo "iptables is not installed. Please install it first."
+        echo "ip6tables is not installed. Please install it first."
         exit 1
     fi
 
+    # 检查 ipset 是否安装
     if ! command -v ipset &> /dev/null; then
         echo "ipset is not installed. Please install it first."
         exit 1
     fi
 
+    # 自动检测网卡名称
     INTERFACE=$(ip route | grep '^default' | awk '{print $5}')
     
     # # 检查是否获取到网卡名称
@@ -99,27 +104,27 @@ chech_status(){
     
     # echo "检测到的网卡名称: $INTERFACE"
 
+    # 检查并创建 IPv4 链
     if iptables -L $CHAIN_NAME &>/dev/null; then
-        :
+        echo "IPv4 chain $CHAIN_NAME already exists."
     else
-        # 创建链并添加到 INPUT 链
-        echo "Creating chain $CHAIN_NAME and adding to INPUT."
+        echo "Creating IPv4 chain $CHAIN_NAME and adding to INPUT."
         iptables -N $CHAIN_NAME
         iptables -I $CHAIN_NAME 1 -p tcp -s 0.0.0.0/0 --dport 22 -j ACCEPT
         iptables -A $CHAIN_NAME -j DROP
         iptables -A INPUT -j $CHAIN_NAME
     fi
 
+    # 检查并创建 IPv6 链
     if ip6tables -L $CHAIN_NAME &>/dev/null; then
-        :
+        echo "IPv6 chain $CHAIN_NAME already exists."
     else
-        # 创建链并添加到 INPUT 链
-        echo "Creating chain $CHAIN_NAME and adding to INPUT."
+        echo "Creating IPv6 chain $CHAIN_NAME and adding to INPUT."
         ip6tables -N $CHAIN_NAME
+        ip6tables -I $CHAIN_NAME 1 -p tcp -s ::/0 --dport 22 -j ACCEPT
         ip6tables -A $CHAIN_NAME -j DROP
         ip6tables -A INPUT -j $CHAIN_NAME
     fi
-    
 }
 
 show_menu() {
