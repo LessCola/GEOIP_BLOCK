@@ -401,7 +401,7 @@ block() {
             ;;
         
         2)
-            echo && read -e -p "请输入需要封锁的IP段 (默认: 选择 1.封禁 IPv4 2.封禁 IPv6): " ipRange
+            echo && read -e -p "请输入需要封锁的IP段, 回车即封锁所有" ipRange
             
             if [[ -z "$ipRange" ]]; then
                 # 用户未输入 IP 段，提示选择 IPv4 或 IPv6
@@ -421,6 +421,7 @@ block() {
                         exit 1
                         ;;
                 esac
+                
                 
             elif [[ $ipRange =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+$ ]]; then
                 ip4Range="$ipRange"  # 输入的是 IPv4 范围
