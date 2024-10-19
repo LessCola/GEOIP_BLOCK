@@ -89,13 +89,23 @@ chech_status(){
         exit 1
     fi
 
+    INTERFACE=$(ip route | grep '^default' | awk '{print $5}')
+    
+    # # 检查是否获取到网卡名称
+    # if [ -z "$INTERFACE" ]; then
+    #     echo "无法检测到网卡名称，确保网络已配置并激活."
+    #     exit 1
+    # fi
+    
+    # echo "检测到的网卡名称: $INTERFACE"
+
     if iptables -L $CHAIN_NAME &>/dev/null; then
         :
     else
         # 创建链并添加到 INPUT 链
         echo "Creating chain $CHAIN_NAME and adding to INPUT."
         iptables -N $CHAIN_NAME
-        iptables -I $CHAIN_NAME 1 -i eth0 -p tcp -s 0.0.0.0/0 --dport 22 -j ACCEPT
+        iptables -I $CHAIN_NAME 1 -p tcp -s 0.0.0.0/0 --dport 22 -j ACCEPT
         iptables -A $CHAIN_NAME -j DROP
         iptables -A INPUT -j $CHAIN_NAME
     fi
@@ -109,6 +119,7 @@ chech_status(){
         ip6tables -A $CHAIN_NAME -j DROP
         ip6tables -A INPUT -j $CHAIN_NAME
     fi
+    
 }
 
 show_menu() {
@@ -246,14 +257,14 @@ allow(){
 
         case $tua in
             1)
-                iptables -I $CHAIN_NAME 1 -i eth0 -p tcp -s "$ip" --dport "$port" -j ACCEPT
+                iptables -I $CHAIN_NAME 1 -p tcp -s "$ip" --dport "$port" -j ACCEPT
                 ;;
             2)
-                iptables -I $CHAIN_NAME 1 -i eth0 -p udp -s "$ip" --dport "$port" -j ACCEPT
+                iptables -I $CHAIN_NAME 1 -p udp -s "$ip" --dport "$port" -j ACCEPT
                 ;;
             3)
-                iptables -I $CHAIN_NAME 1 -i eth0 -p tcp -s "$ip" --dport "$port" -j ACCEPT
-                iptables -I $CHAIN_NAME 1 -i eth0 -p udp -s "$ip" --dport "$port" -j ACCEPT
+                iptables -I $CHAIN_NAME 1 -p tcp -s "$ip" --dport "$port" -j ACCEPT
+                iptables -I $CHAIN_NAME 1 -p udp -s "$ip" --dport "$port" -j ACCEPT
                 ;;
         esac
 
@@ -261,14 +272,14 @@ allow(){
 
         case $tua in
             1)
-                ip6tables -I $CHAIN_NAME 1 -i eth0 -p tcp -s $ip --dport $port -j ACCEPT
+                ip6tables -I $CHAIN_NAME 1 -p tcp -s $ip --dport $port -j ACCEPT
                 ;;
             2)
-                ip6tables -I $CHAIN_NAME 1 -i eth0 -p udp -s $ip --dport $port -j ACCEPT
+                ip6tables -I $CHAIN_NAME 1 -p udp -s $ip --dport $port -j ACCEPT
                 ;;
             3)
-                ip6tables -I $CHAIN_NAME 1 -i eth0 -p tcp -s $ip --dport $port -j ACCEPT
-                ip6tables -I $CHAIN_NAME 1 -i eth0 -p udp -s $ip --dport $port -j ACCEPT
+                ip6tables -I $CHAIN_NAME 1 -p tcp -s $ip --dport $port -j ACCEPT
+                ip6tables -I $CHAIN_NAME 1 -p udp -s $ip --dport $port -j ACCEPT
                 ;;
         esac
 
@@ -355,18 +366,18 @@ block() {
 
             case $tua in
                 1)
-                    iptables -A GEO_BLOCK -i eth0 -p tcp --dport $port -m set --match-set "${country}_4" src -j DROP      
-                    ip6tables -A GEO_BLOCK -i eth0 -p tcp --dport $port -m set --match-set "${country}_6" src -j DROP    
+                    iptables -A GEO_BLOCK -p tcp --dport $port -m set --match-set "${country}_4" src -j DROP      
+                    ip6tables -A GEO_BLOCK -p tcp --dport $port -m set --match-set "${country}_6" src -j DROP    
                     ;;
                 2)
-                    iptables -A GEO_BLOCK -i eth0 -p udp --dport $port -m set --match-set "${country}_4" src -j DROP      
-                    ip6tables -A GEO_BLOCK -i eth0 -p udp --dport $port -m set --match-set "${country}_6" src -j DROP     
+                    iptables -A GEO_BLOCK -p udp --dport $port -m set --match-set "${country}_4" src -j DROP      
+                    ip6tables -A GEO_BLOCK -p udp --dport $port -m set --match-set "${country}_6" src -j DROP     
                     ;;
                 3)
-                    iptables -A GEO_BLOCK -i eth0 -p tcp --dport $port -m set --match-set "${country}_4" src -j DROP      
-                    ip6tables -A GEO_BLOCK -i eth0 -p tcp --dport $port -m set --match-set "${country}_6" src -j DROP  
-                    iptables -A GEO_BLOCK -i eth0 -p udp --dport $port -m set --match-set "${country}_4" src -j DROP      
-                    ip6tables -A GEO_BLOCK -i eth0 -p udp --dport $port -m set --match-set "${country}_6" src -j DROP 
+                    iptables -A GEO_BLOCK -p tcp --dport $port -m set --match-set "${country}_4" src -j DROP      
+                    ip6tables -A GEO_BLOCK -p tcp --dport $port -m set --match-set "${country}_6" src -j DROP  
+                    iptables -A GEO_BLOCK -p udp --dport $port -m set --match-set "${country}_4" src -j DROP      
+                    ip6tables -A GEO_BLOCK -p udp --dport $port -m set --match-set "${country}_6" src -j DROP 
                     ;;
             esac
             ;;
@@ -386,27 +397,27 @@ block() {
             if [[ $ipRange =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+$ ]]; then
                 case $tua in
                     1)
-                        iptables -I $CHAIN_NAME 1 -i eth0 -p tcp -s "$ipRange" --dport "$port" -j DROP
+                        iptables -I $CHAIN_NAME 1 -p tcp -s "$ipRange" --dport "$port" -j DROP
                         ;;
                     2)
-                        iptables -I $CHAIN_NAME 1 -i eth0 -p udp -s "$ipRange" --dport "$port" -j DROP
+                        iptables -I $CHAIN_NAME 1 -p udp -s "$ipRange" --dport "$port" -j DROP
                         ;;
                     3)
-                        iptables -I $CHAIN_NAME 1 -i eth0 -p tcp -s "$ipRange" --dport "$port" -j DROP
-                        iptables -I $CHAIN_NAME 1 -i eth0 -p udp -s "$ipRange" --dport "$port" -j DROP
+                        iptables -I $CHAIN_NAME 1 -p tcp -s "$ipRange" --dport "$port" -j DROP
+                        iptables -I $CHAIN_NAME 1 -p udp -s "$ipRange" --dport "$port" -j DROP
                         ;;
                 esac
             elif [[ $ipRange =~ ^[0-9a-fA-F:]+/[0-9]+$ ]]; then
                 case $tua in
                     1)
-                        ip6tables -I $CHAIN_NAME 1 -i eth0 -p tcp -s "$ipRange" --dport "$port" -j DROP
+                        ip6tables -I $CHAIN_NAME 1 -p tcp -s "$ipRange" --dport "$port" -j DROP
                         ;;
                     2)
-                        ip6tables -I $CHAIN_NAME 1 -i eth0 -p udp -s "$ipRange" --dport "$port" -j DROP
+                        ip6tables -I $CHAIN_NAME 1 -p udp -s "$ipRange" --dport "$port" -j DROP
                         ;;
                     3)
-                        ip6tables -I $CHAIN_NAME 1 -i eth0 -p tcp -s "$ipRange" --dport "$port" -j DROP
-                        ip6tables -I $CHAIN_NAME 1 -i eth0 -p udp -s "$ipRange" --dport "$port" -j DROP
+                        ip6tables -I $CHAIN_NAME 1 -p tcp -s "$ipRange" --dport "$port" -j DROP
+                        ip6tables -I $CHAIN_NAME 1 -p udp -s "$ipRange" --dport "$port" -j DROP
                         ;;
                 esac
             else
