@@ -164,31 +164,35 @@ ${green}5.${plain} 清空规则
 
 list_rule(){
 
+    # 获取并格式化 iptables 规则
+    # 打印表头
     printf "%-15s %-15s %-15s %-15s %-15s %-15s \n" "序号" "动作" "IP" "地区" "协议" "目标端口"
 
     # 获取并格式化 iptables 规则
-    iptables_rules=$(iptables -L $CHAIN_NAME --line-numbers -n | awk 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", NR-2+offset, $2, $5, $10, $7, $8}')
+    iptables_rules=$(iptables -L $CHAIN_NAME --line-numbers -n | awk '
+    NR > 2 {
 
+        ip = ($5 != "") ? $5 : "N/A"
+        protocol = ($7 != "") ? $7 : "N/A"
+        port = ($8 ~ /^dpt:/) ? substr($8, 5) : "N/A"
+        region = ($10 != "") ? $10 : "N/A"
+
+        printf "%-15s %-15s %-20s %-15s %-15s %-15s\n", NR-2, $2, ip, region, protocol, port
+    }')
     if [ -n "$iptables_rules" ]; then
         echo "$iptables_rules" | awk '
         {
-            # 如果第7字段以 "dpt:" 开头，表示这是端口信息
-            port = ($6 ~ /^dpt:/) ? substr($5, 5) : "N/A"
-        
-            if ($4 == "") {
-                IP = "0.0.0.0/0";
-            }
-            else {
+            if ($4 != "N/A") {
                 $3 = "N/A";
-            }
-            
+            }            
             # 打印格式化输出
-            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, $4, $5, port
+            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, $4, $5, $6
         }'
 
     else
         :
     fi
+
 
     # 计算 IPv4 规则数量
     ipv4_count=$(echo "$iptables_rules" | grep -v '^$' | wc -l)
@@ -196,23 +200,25 @@ list_rule(){
     # echo $ipv4_count
 
     # 获取并格式化 ip6tables 规则
-    ip6tables_rules=$(ip6tables -L $CHAIN_NAME --line-numbers -n | awk -v offset=$((ipv4_count)) 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $8}')
+    ip6tables_rules=$(ip6tables -L $CHAIN_NAME --line-numbers -n | awk -v offset=$((ipv4_count)) '
+    NR > 2 {
+
+        ip = ($5 != "") ? $5 : "N/A"
+        protocol = ($7 != "") ? $7 : "N/A"
+        port = ($8 ~ /^dpt:/) ? substr($8, 5) : "N/A"
+        region = ($10 != "") ? $10 : "N/A"
+
+        printf "%-15s %-15s %-20s %-15s %-15s %-15s\n", NR-2, $2, ip, region, protocol, port
+    }')
 
     if [ -n "$ip6tables_rules" ]; then
         echo "$ip6tables_rules" | awk '
         {
-            # 如果第7字段以 "dpt:" 开头，表示这是端口信息
-            port = ($5 ~ /^dpt:/) ? substr($5, 5) : "N/A"
-        
-            if ($4 == "") {
-                IP = "::/0";
-            }
-            else {
+            if ($4 != "N/A") {
                 $3 = "N/A";
-            }
-            
+            }            
             # 打印格式化输出
-            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, $4, $5, port
+            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, $4, $5, $6
         }'
 
     else
@@ -505,28 +511,30 @@ delete_rules() {
     printf "%-15s %-15s %-15s %-15s %-15s %-15s %-15s\n" "序号" "动作" "IP" "地区" "协议" "目标端口"
 
     # 获取并格式化 iptables 规则
-    iptables_rules=$(iptables -L $CHAIN_NAME --line-numbers -n | awk 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", NR-2+offset, $2, $5, $10, $7, $8}')
+    iptables_rules=$(iptables -L $CHAIN_NAME --line-numbers -n | awk '
+    NR > 2 {
 
+        ip = ($5 != "") ? $5 : "N/A"
+        protocol = ($7 != "") ? $7 : "N/A"
+        port = ($8 ~ /^dpt:/) ? substr($8, 5) : "N/A"
+        region = ($10 != "") ? $10 : "N/A"
+
+        printf "%-15s %-15s %-20s %-15s %-15s %-15s\n", NR-2, $2, ip, region, protocol, port
+    }')
     if [ -n "$iptables_rules" ]; then
         echo "$iptables_rules" | awk '
         {
-            # 如果第7字段以 "dpt:" 开头，表示这是端口信息
-            port = ($6 ~ /^dpt:/) ? substr($5, 5) : "N/A"
-        
-            if ($4 == "") {
-                IP = "0.0.0.0/0";
-            }
-            else {
+            if ($4 != "N/A") {
                 $3 = "N/A";
-            }
-            
+            }            
             # 打印格式化输出
-            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, $4, $5, port
+            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, $4, $5, $6
         }'
 
     else
         :
     fi
+
 
     # 计算 IPv4 规则数量
     ipv4_count=$(echo "$iptables_rules" | grep -v '^$' | wc -l)
@@ -534,23 +542,25 @@ delete_rules() {
     # echo $ipv4_count
 
     # 获取并格式化 ip6tables 规则
-    ip6tables_rules=$(ip6tables -L $CHAIN_NAME --line-numbers -n | awk -v offset=$((ipv4_count)) 'NR > 2 {printf "%-13s %-13s %-15s %-13s %-13s\n", NR-2+offset, $2, $5, $7, $8}')
+    ip6tables_rules=$(ip6tables -L $CHAIN_NAME --line-numbers -n | awk -v offset=$((ipv4_count)) '
+    NR > 2 {
+
+        ip = ($5 != "") ? $5 : "N/A"
+        protocol = ($7 != "") ? $7 : "N/A"
+        port = ($8 ~ /^dpt:/) ? substr($8, 5) : "N/A"
+        region = ($10 != "") ? $10 : "N/A"
+
+        printf "%-15s %-15s %-20s %-15s %-15s %-15s\n", NR-2, $2, ip, region, protocol, port
+    }')
 
     if [ -n "$ip6tables_rules" ]; then
         echo "$ip6tables_rules" | awk '
         {
-            # 如果第7字段以 "dpt:" 开头，表示这是端口信息
-            port = ($5 ~ /^dpt:/) ? substr($5, 5) : "N/A"
-        
-            if ($4 == "") {
-                IP = "::/0";
-            }
-            else {
+            if ($4 != "N/A") {
                 $3 = "N/A";
-            }
-            
+            }            
             # 打印格式化输出
-            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, $4, $5, port
+            printf "%-13s %-13s %-15s %-13s %-13s %-13s\n", $1, $2, $3, $4, $5, $6
         }'
 
     else
@@ -662,6 +672,6 @@ else
     check_status
     show_menu
 fi
-
+# list_rules
 # chech_status
 # show_menu
