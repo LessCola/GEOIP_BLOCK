@@ -106,7 +106,8 @@ check_status() {
 
     # 检查并创建 IPv4 链
     if iptables -L $CHAIN_NAME &>/dev/null; then
-        echo "IPv4 chain $CHAIN_NAME already exists."
+        :
+        # echo "IPv4 chain $CHAIN_NAME already exists."
     else
         echo "Creating IPv4 chain $CHAIN_NAME and adding to INPUT."
         iptables -N $CHAIN_NAME
@@ -115,7 +116,8 @@ check_status() {
 
     # 检查并创建 IPv6 链
     if ip6tables -L $CHAIN_NAME &>/dev/null; then
-        echo "IPv6 chain $CHAIN_NAME already exists."
+        :
+        # echo "IPv6 chain $CHAIN_NAME already exists."
     else
         echo "Creating IPv6 chain $CHAIN_NAME and adding to INPUT."
         ip6tables -N $CHAIN_NAME
@@ -334,7 +336,8 @@ block() {
             
             # 检查 ipset 集合是否已经存在
             if ipset list 2>/dev/null | grep "^Name: ${country}_4" && ipset list 2>/dev/null | grep "^Name: ${country}_6"; then
-                echo "IP 地址集合 ${country}_4 和 ${country}_6 已存在，不需要重复下载。"
+                :
+                # echo "IP 地址集合 ${country}_4 和 ${country}_6 已存在，不需要重复下载。"
             else
                 # 集合不存在，执行下载并创建集合
                 rm $tempdir/$ipFile 2>/dev/null
