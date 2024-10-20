@@ -168,7 +168,7 @@ list_rule(){
 
     # 获取并格式化 iptables 规则
     # 打印表头
-    printf "%-7s %-10s %-25s %-15s %-15s %-15s \n" "序号" "动作" "IP" "地区" "协议" "目标端口"
+    printf "%-7s %-10s %-30s %-15s %-15s %-15s \n" "序号" "动作" "IP" "地区" "协议" "目标端口"
 
     # 获取并格式化 iptables 规则
     iptables_rules=$(iptables -L $CHAIN_NAME --line-numbers -n | awk '
@@ -179,7 +179,7 @@ list_rule(){
         port = ($8 ~ /^dpt:/) ? substr($8, 5) : "N/A"
         region = ($10 != "") ? $10 : "N/A"
 
-        printf "%-5s %-8s %-25s %-15s %-15s %-15s\n", NR-2, $2, ip, region, protocol, port
+        printf "%-5s %-8s %-30s %-15s %-15s %-15s\n", NR-2, $2, ip, region, protocol, port
     }')
     if [ -n "$iptables_rules" ]; then
         echo "$iptables_rules" | awk '
@@ -188,7 +188,7 @@ list_rule(){
                 $3 = "N/A";
             }            
             # 打印格式化输出
-            printf "%-5s %-8s %-25s %-13s %-15s %-13s\n", $1, $2, $3, $4, $5, $6
+            printf "%-5s %-8s %-30s %-13s %-15s %-13s\n", $1, $2, $3, $4, $5, $6
         }'
 
     else
@@ -210,7 +210,7 @@ list_rule(){
         port = ($8 ~ /^dpt:/) ? substr($8, 5) : "N/A"
         region = ($10 != "") ? $10 : "N/A"
 
-        printf "%-5s %-8s %-25s %-15s %-15s %-15s\n", NR-2+offset, $2, ip, region, protocol, port
+        printf "%-5s %-8s %-30s %-15s %-15s %-15s\n", NR-2+offset, $2, ip, region, protocol, port
     }')
 
     if [ -n "$ip6tables_rules" ]; then
@@ -220,7 +220,7 @@ list_rule(){
                 $3 = "N/A";
             }            
             # 打印格式化输出
-            printf "%-5s %-8s %-25s %-13s %-15s %-13s\n", $1, $2, $3, $4, $5, $6
+            printf "%-5s %-8s %-30s %-13s %-15s %-13s\n", $1, $2, $3, $4, $5, $6
         }'
 
     else
