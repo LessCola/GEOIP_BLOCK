@@ -670,12 +670,12 @@ restore() {
     fi
 }
 
-# if [ "$1" = "restore" ]; then
-#     restore
-# else
-#     check_status
-#     show_menu
-# fi
-list_rules
+if [ "$1" = "restore" ]; then
+    restore
+else
+    check_status
+    show_menu
+fi
+# list_rules
 # chech_status
 # show_menu
